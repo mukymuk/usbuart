@@ -1,0 +1,3 @@
+[submodule "board/max32620fthr"]
+	path = board/max32620fthr
+	url = git@github.com:mukymuk/max32620fthr.git

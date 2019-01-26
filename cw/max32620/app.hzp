@@ -1,0 +1,87 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="app" target="8" version="2">
+  <project Name="app">
+    <configuration
+      CMSIS_CORE="Yes"
+      Name="Common"
+      Placement="Flash"
+      Target="MAX32620"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_interwork="No"
+      arm_linker_heap_size="256"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/MAX32620/Simulator/MAX32620_SimulatorMemory_$(HostOS)_$(HostArch)$(HostDLLExt)"
+      arm_simulator_memory_simulation_parameter="MAX32620;FLASH,0x00000000,0x00200000,ROM;RAM,0x20000000,0x00020000,RAM"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="MAX32620"
+      arm_target_interface_type="SWD"
+      arm_target_loader_applicable_loaders="Flash"
+      arm_target_loader_default_loader="Flash"
+      c_preprocessor_definitions=""
+      c_user_include_directories="$(DeviceIncludePath);../..;$(BOARD);$(BOARD)/csl/device/maxim/$(DeviceFamily)/include;$(BOARD)\\csl\\cmsis\\Device\\Maxim\\MAX32620\\Include"
+      debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="$(DeviceMemoryMapFile)"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      macros="BOARD=../../board/max32620fthr;DeviceFamily=MAX32620;DeviceIncludePath=$(BOARD)/csl/cmsis/include;DeviceHeaderFile=$(BOARD)/csl/CMSIS/Libraries/Device/Maxim/$(DeviceFamily)/Include/$(DeviceFamily).h;DeviceLoaderFile=$(TargetsDir)/$(DeviceFamily)/Loader/$(DeviceFamily)_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/MAX32620/XML/MAX32620_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/MAX32620/XML/MAX32620_Registers.xml;DeviceSystemFile=$(BOARD)/csl/cmsis/Device/Maxim/$(DeviceFamily)/Source/system_max32620.c;DeviceVectorsFile=MAX32620_Vectors.s"
+      package_dependencies="MAX32620"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/MAX32620/XML/property_groups.xml"
+      target_get_partname_script="GetPartName()"
+      target_match_partname_script="MatchPartName(&quot;$(Target)&quot;)"
+      target_reset_script="Reset();"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(DeviceLoaderFile)" />
+    <folder Name="Script Files">
+      <file file_name="$(TargetsDir)/MAX32620/Scripts/MAX32620_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+    <folder Name="System Files">
+      <file file_name="thumb_crt0.s" />
+      <file file_name="MAX32620_Startup.s" />
+      <file file_name="max32620_Vectors.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <file file_name="../../global.h" />
+    <file file_name="../../main.c" />
+    <file file_name="../../board/max32620fthr/board.c" />
+    <folder Name="csl">
+      <file file_name="../../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/system_max32620.c" />
+    </folder>
+  </project>
+  <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
+  <configuration
+    Name="THUMB"
+    Platform="ARM"
+    arm_instruction_set="Thumb"
+    arm_library_instruction_set="Thumb"
+    c_preprocessor_definitions="__THUMB"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+  <configuration
+    Name="THUMB Release"
+    inherited_configurations="THUMB;Release" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="None"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="Level 1"
+    hidden="Yes" />
+</solution>
