@@ -28,7 +28,7 @@
       gcc_entry_point="Reset_Handler"
       linker_memory_map_file="$(DeviceMemoryMapFile)"
       linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
-      macros="BOARD=../../board/max32620fthr;DeviceFamily=MAX32620;DeviceIncludePath=$(BOARD)/csl/cmsis/include;DeviceHeaderFile=$(BOARD)/csl/CMSIS/Libraries/Device/Maxim/$(DeviceFamily)/Include/$(DeviceFamily).h;DeviceLoaderFile=$(TargetsDir)/$(DeviceFamily)/Loader/$(DeviceFamily)_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/MAX32620/XML/MAX32620_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/MAX32620/XML/MAX32620_Registers.xml;DeviceSystemFile=$(BOARD)/csl/cmsis/Device/Maxim/$(DeviceFamily)/Source/system_max32620.c;DeviceVectorsFile=MAX32620_Vectors.s"
+      macros="BOARD=../../board/max32620fthr;DeviceFamily=MAX32620;DeviceIncludePath=$(BOARD)/csl/cmsis/include;DeviceHeaderFile=$(BOARD)/csl/CMSIS/Libraries/Device/Maxim/$(DeviceFamily)/Include/$(DeviceFamily).h;DeviceLoaderFile=$(TargetsDir)/MAX32620/Loader/MAX32620_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/MAX32620/XML/MAX32620_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/MAX32620/XML/MAX32620_Registers.xml;DeviceSystemFile=$(BOARD)/csl/cmsis/Device/Maxim/MAX32620/Source/system_max32620.c;DeviceVectorsFile=MAX32620_Vectors.s"
       package_dependencies="MAX32620"
       project_directory=""
       project_type="Executable"
