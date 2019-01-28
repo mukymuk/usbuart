@@ -147,6 +147,145 @@
         <Folder Name="../">
             <F N="../global.h"/>
             <F N="../main.c"/>
+            <F N="../usb.c"/>
+            <F N="../usb.h"/>
+        </Folder>
+        <Folder Name="../board">
+            <Folder Name="max32620fthr">
+                <Folder Name="csl">
+                    <Folder Name="cmsis">
+                        <Folder Name="Device">
+                            <Folder Name="Maxim">
+                                <Folder Name="MAX32620">
+                                    <Folder Name="Include">
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/adc_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/aes_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/clkman_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/crc_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/flc_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/gpio_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/i2cm_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/i2cs_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/icc_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/ioman_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/maa_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/max32620.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/mxc_device.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/owm_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/pmu_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/prng_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/pt_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/pwrman_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/pwrseq_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/rtc_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/spib_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/spim_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/spis_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/spix_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/sysman_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/system_max32620.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/tmr_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/tpu_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/trim_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/uart_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/usb_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/wdt2_regs.h"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Include/wdt_regs.h"/>
+                                    </Folder>
+                                    <Folder Name="Source">
+                                        <Folder Name="IAR">
+                                            <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/IAR/low_level_init.c"/>
+                                        </Folder>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/heap.c"/>
+                                        <F N="../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/system_max32620.c"/>
+                                    </Folder>
+                                </Folder>
+                            </Folder>
+                        </Folder>
+                        <Folder Name="Include">
+                            <F N="../board/max32620fthr/csl/cmsis/Include/arm_common_tables.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/arm_const_structs.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/arm_math.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/core_cm3.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/core_cm4.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/core_cm4_simd.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/core_cmFunc.h"/>
+                            <F N="../board/max32620fthr/csl/cmsis/Include/core_cmInstr.h"/>
+                        </Folder>
+                    </Folder>
+                    <Folder Name="periphdriver">
+                        <Folder Name="Include">
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/adc.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/aes.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/clkman.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/crc.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/flc.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/gpio.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/i2cm.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/i2cs.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/icc.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/ioman.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/lp.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/maa.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/mxc_assert.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/mxc_config.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/mxc_errors.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/mxc_lock.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/mxc_sys.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/nvic_table.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/owm.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/pmu.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/prng.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/pt.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/rtc.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/spim.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/spis.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/spix.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/tmr.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/tmr_utils.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/uart.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/wdt.h"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Include/wdt2.h"/>
+                        </Folder>
+                        <Folder Name="Source">
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/adc.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/aes.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/clkman.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/crc.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/flc.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/gpio.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/i2cm.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/i2cs.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/icc.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/ioman.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/lp.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/maa.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/mxc_assert.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/mxc_lock.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/mxc_sys.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/nvic_table.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/owm.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/pmu.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/prng.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/pt.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/rtc.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/spim.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/spis.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/spix.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/tmr.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/tmr_utils.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/uart.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/wdt.c"/>
+                            <F N="../board/max32620fthr/csl/periphdriver/Source/wdt2.c"/>
+                        </Folder>
+                    </Folder>
+                </Folder>
+                <F N="../board/max32620fthr/board.c"/>
+                <F N="../board/max32620fthr/board.h"/>
+            </Folder>
+        </Folder>
+        <Folder Name="../cw">
+            <F N="../cw/ide.h"/>
         </Folder>
         <F N="build.bat"/>
     </Files>

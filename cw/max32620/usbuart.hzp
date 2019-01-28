@@ -23,7 +23,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       c_preprocessor_definitions=""
-      c_user_include_directories="$(DeviceIncludePath);../..;$(BOARD);$(BOARD)/csl/device/maxim/$(DeviceFamily)/include;$(BOARD)\\csl\\cmsis\\Device\\Maxim\\MAX32620\\Include"
+      c_user_include_directories="$(DeviceIncludePath);../..;$(BOARD);$(BOARD)/csl/device/maxim/$(DeviceFamily)/include;$(BOARD)\\csl\\cmsis\\Device\\Maxim\\MAX32620\\Include;.."
       debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
       gcc_entry_point="Reset_Handler"
       linker_memory_map_file="$(DeviceMemoryMapFile)"
@@ -58,6 +58,8 @@
     <folder Name="csl">
       <file file_name="../../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/system_max32620.c" />
     </folder>
+    <file file_name="../../usb.c" />
+    <file file_name="../../usb.h" />
   </project>
   <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
   <configuration
