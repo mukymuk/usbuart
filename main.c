@@ -4,11 +4,12 @@
 #include "clkman_regs.h"
 #include "usb_regs.h"
 
-
+#include "usb.h"
 
 void main(void)
 {
-
     DBG(("test%d",3));
-}    
+    usb_init();
+    while( 1 );
+}
 

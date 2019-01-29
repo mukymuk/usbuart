@@ -20,9 +20,9 @@
 
 typedef struct
 {
-    uint8_t     direction : 1;  // USB_SETUP_REQUEST_TYPE_DIRECTION_*
-    uint8_t     type      : 2;  // USB_SETUP_REQUEST_TYPE_*
     uint8_t     recipient : 5;  // USB_SETUP_REQUEST_TYPE_RECIPIENT_*
+    uint8_t     type      : 2;  // USB_SETUP_REQUEST_TYPE_*
+    uint8_t     direction : 1;  // USB_SETUP_REQUEST_TYPE_DIRECTION_*
 }
 usb_setup_request_type_t;
 
@@ -48,7 +48,12 @@ typedef struct
 }
 usb_setup_t;
 
-
+typedef union
+{
+    usb_setup_t setup;
+    uint32_t    reg[2];
+}
+usb_setup_reg_t;
 
 /* Bitmasks for the bit-field bmRequestType */
 #define RT_DEV_TO_HOST            0x80
@@ -121,7 +126,15 @@ usb_endpoint_buffer;
 
 typedef struct
 {
-    usb_endpoint_buffer endpoint[4];
+    usb_buffer_t      out;
+    usb_buffer_t      in;
+}
+usb_endpoint0_buffer;
+
+typedef struct
+{
+    usb_endpoint0_buffer    endpoint0;
+    usb_endpoint_buffer     endpoint[3];
 }
 usb_sie_t;
 
@@ -237,6 +250,16 @@ typedef struct
     usb_endpoint_descriptor_t               ep_bulk_in;
 }
 usb_configuration_descriptor_t;
+
+typedef struct
+{
+    uint16_t    self_powered : 1;
+    uint16_t    remote_wakeup : 1;
+    uint16_t    reserved : 14;
+}
+get_device_status_t;
+
+#define USB_ENDPOINT_CONTROL 0
 
 #pragma pack(4)
 
@@ -409,29 +432,44 @@ void usb_init( void )
 {
     MXC_CLKMAN->clk_ctrl = MXC_F_CLKMAN_CLK_CTRL_USB_CLOCK_ENABLE;
     MXC_PWRMAN->pwr_rst_ctrl |= MXC_F_PWRMAN_PWR_RST_CTRL_USB_POWERED;
-
+    MXC_USB->cn = 1;
     MXC_USB->ep_base = (uint32_t)&s_usb_sie;
-    MXC_USB->dev_inten = MXC_F_USB_DEV_INTEN_SETUP;
-
+    MXC_USB->dev_inten = MXC_F_USB_DEV_INTEN_SETUP | MXC_F_USB_DEV_INTEN_BRST | MXC_F_USB_DEV_INTEN_EP_IN | MXC_F_USB_DEV_INTEN_EP_OUT;
+    MXC_USB->ep[USB_ENDPOINT_CONTROL] |= MXC_F_USB_EP_INT_EN;
+    MXC_USB->dev_cn = (MXC_F_USB_DEV_CN_CONNECT | MXC_F_USB_DEV_CN_FIFO_MODE);
+    NVIC_EnableIRQ(USB_IRQn);
 }
 
 static void wake( void )
 {
     MXC_PWRMAN->pwr_rst_ctrl |= MXC_F_PWRMAN_PWR_RST_CTRL_USB_POWERED;
     MXC_USB->dev_cn &= ~MXC_F_USB_DEV_CN_ULPM;
-
 }
 
-typedef struct
-{
-    uint16_t    self_powered : 1;
-    uint16_t    remote_wakeup : 1;
-    uint16_t    reserved : 14;
-}
-get_device_status_t;
 
-static void usb_write( const void *p_data, uint8_t size )
+static void usb_write( uint8_t ep, const void *p_data, uint8_t size )
 {
+    if( ep )
+    {
+        s_usb_sie.endpoint[ep-1].buffer[0].address = (uint32_t)p_data;
+        s_usb_sie.endpoint[ep-1].buffer[0].size = size;
+    }
+    else
+    {
+        s_usb_sie.endpoint0.in.address = (uint32_t)p_data;
+        s_usb_sie.endpoint0.in.size = size;
+    }
+    MXC_USB->in_owner = (1<<ep);
+}
+
+static void inline usb_stall( uint8_t ep )
+{
+    MXC_USB->ep[ep] |= MXC_F_USB_EP_ST_STALL;
+}
+
+static void inline usb_ack( uint8_t ep )
+{
+    MXC_USB->ep[ep] |= MXC_F_USB_EP_ST_ACK;
 }
 
 #define USB_CONFIG_SELF_POWERED 0
@@ -439,6 +477,7 @@ static void usb_write( const void *p_data, uint8_t size )
 typedef struct
 {
     uint32_t remote_wakeup : 1;
+    uint8_t configuration;
 }
 usb_t;
 
@@ -457,8 +496,8 @@ static void setup_device_request( const usb_setup_t * p )
             get_device_status_t status;
             status.self_powered = USB_CONFIG_SELF_POWERED;
             status.remote_wakeup = s_usb.remote_wakeup;
-            usb_write( &status, sizeof(status) );
-            break;
+            usb_write( USB_ENDPOINT_CONTROL, &status, sizeof(status) );
+            return;
         }
         case USB_SETUP_REQUEST_CLEAR_FEATURE:
         {
@@ -466,7 +505,8 @@ static void setup_device_request( const usb_setup_t * p )
             {
                 s_usb.remote_wakeup = false;
             }
-            break;
+            usb_ack(USB_ENDPOINT_CONTROL);
+            return;
         }
         case USB_SETUP_REQUEST_SET_FEATURE:
         {
@@ -474,29 +514,32 @@ static void setup_device_request( const usb_setup_t * p )
             {
                 s_usb.remote_wakeup = true;
             }
-            break;
+            usb_ack(USB_ENDPOINT_CONTROL);
+            return;
         }
         case USB_SETUP_REQUEST_SET_ADDRESS:
         {
-            break;
+            usb_ack(USB_ENDPOINT_CONTROL);
+            return;
         }
         case USB_SETUP_REQUEST_GET_DESCRIPTOR:
         {
-            break;
-        }
-        case USB_SETUP_REQUEST_SET_DESCRIPTOR:
-        {
-            break;
+            usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.device, sizeof(s_descriptors.device) );
+            return;
         }
         case USB_SETUP_REQUEST_GET_CONFIGURATION:
         {
-            break;
+            usb_write( USB_ENDPOINT_CONTROL, &s_usb.configuration, sizeof(s_usb.configuration) );
+            return;
         }
         case USB_SETUP_REQUEST_SET_CONFIGURATION:
         {
-            break;
+            s_usb.configuration = p->wValue;
+            usb_ack(USB_ENDPOINT_CONTROL);
+            return;
         }
     }
+    usb_stall(USB_ENDPOINT_CONTROL);
 }
 
 static void setup_interface_request( const usb_setup_t * p )
@@ -505,25 +548,23 @@ static void setup_interface_request( const usb_setup_t * p )
     {
         case USB_SETUP_REQUEST_GET_STATUS:
         {
-            break;
-        }
-        case USB_SETUP_REQUEST_CLEAR_FEATURE:
-        {
-            break;
-        }
-        case USB_SETUP_REQUEST_SET_FEATURE:
-        {
-            break;
+            uint16_t zero = 0;
+            usb_write( USB_ENDPOINT_CONTROL, &zero, sizeof(zero) );
+            return;
         }
         case USB_SETUP_REQUEST_GET_INTERFACE:
         {
-            break;
+            uint8_t zero = 0;
+            usb_write( USB_ENDPOINT_CONTROL, &zero, sizeof(zero) );
+            return;
         }
         case USB_SETUP_REQUEST_SET_INTERFACE:
         {
-            break;
+            usb_ack(USB_ENDPOINT_CONTROL);
+            return;
         }
     }
+    usb_stall(USB_ENDPOINT_CONTROL);
 }
 
 static void setup_endpoint_request( const usb_setup_t * p )
@@ -532,26 +573,31 @@ static void setup_endpoint_request( const usb_setup_t * p )
     {
         case USB_SETUP_REQUEST_GET_STATUS:
         {
-            break;
+            uint8_t zero = 0;
+            usb_write( USB_ENDPOINT_CONTROL, &zero, sizeof(zero) );
+            return;
         }
         case USB_SETUP_REQUEST_CLEAR_FEATURE:
-        {
-            break;
-        }
         case USB_SETUP_REQUEST_SET_FEATURE:
-        {
-            break;
-        }
         case USB_SETUP_REQUEST_SYNC_FRAME:
         {
             break;
         }
     }
+    usb_stall(USB_ENDPOINT_CONTROL);
 }
 
 static void setup( void )
 {
-    const usb_setup_t *p = (const usb_setup_t*)&MXC_USB->setup0;
+    usb_setup_reg_t setup;
+    const usb_setup_t *p;
+    {
+        // copy setup payload into RAM so as to avoid non 32-bit access bus faults
+        const usb_setup_reg_t *p_reg = (const usb_setup_reg_t*)&MXC_USB->setup0;
+        setup.reg[0] = p_reg->reg[0];
+        setup.reg[1] = p_reg->reg[1];
+        p = &setup.setup;
+    }
     switch( p->bmRequestType.type )
     {
         case USB_SETUP_REQUEST_TYPE_STANDARD:
@@ -584,6 +630,12 @@ void USB_IRQHandler( void )
 {
     uint32_t intfl = MXC_USB->dev_intfl & MXC_USB->dev_inten;
 
+    if( intfl & MXC_F_USB_DEV_INTFL_EP_IN )
+    {
+    }
+    if( intfl & MXC_F_USB_DEV_INTFL_EP_OUT )
+    {
+    }
     if( intfl & MXC_F_USB_DEV_INTFL_SETUP )
     {
         setup();
