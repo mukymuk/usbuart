@@ -126,8 +126,8 @@ usb_endpoint_buffer;
 
 typedef struct
 {
-    usb_buffer_t      out;
-    usb_buffer_t      in;
+    usb_endpoint_buffer      out;
+    usb_endpoint_buffer      in;
 }
 usb_endpoint0_buffer;
 
@@ -456,8 +456,17 @@ static void usb_write( uint8_t ep, const void *p_data, uint8_t size )
     }
     else
     {
-        s_usb_sie.endpoint0.in.address = (uint32_t)p_data;
-        s_usb_sie.endpoint0.in.size = size;
+        s_usb_sie.endpoint0.in.buffer[0].address = (uint32_t)p_data;
+        s_usb_sie.endpoint0.in.buffer[0].size = size;
+//        s_usb_sie.endpoint0.in.buffer[1].address = (uint32_t)p_data;
+//        s_usb_sie.endpoint0.in.buffer[1].size = size;
+
+//        s_usb_sie.endpoint0.out.buffer[0].address = (uint32_t)p_data;
+//        s_usb_sie.endpoint0.out.buffer[0].size = size;
+//        s_usb_sie.endpoint0.out.buffer[1].address = (uint32_t)p_data;
+//        s_usb_sie.endpoint0.out.buffer[1].size = size;
+
+
     }
     MXC_USB->in_owner = (1<<ep);
 }
@@ -522,9 +531,27 @@ static void setup_device_request( const usb_setup_t * p )
             usb_ack(USB_ENDPOINT_CONTROL);
             return;
         }
+#define USB_DESCRIPTOR_TYPE_DEVICE			1
+#define USB_DESCRIPTOR_TYPE_CONFIGURATION	2
+#define USB_DESCRIPTOR_TYPE_STRING			3
+
         case USB_SETUP_REQUEST_GET_DESCRIPTOR:
         {
-            usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.device, sizeof(s_descriptors.device) );
+			switch( p->wValue & 0xFF )
+			{
+				case USB_DESCRIPTOR_TYPE_DEVICE:
+				{
+					usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.device, sizeof(s_descriptors.device) );
+					return;
+				}
+				case USB_DESCRIPTOR_TYPE_CONFIGURATION:
+				{
+					usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.configuration, sizeof(s_descriptors.configuration) );
+				}
+				case USB_DESCRIPTOR_TYPE_STRING:
+				{
+				}
+			}
             return;
         }
         case USB_SETUP_REQUEST_GET_CONFIGURATION:
@@ -632,6 +659,7 @@ void USB_IRQHandler( void )
 
     if( intfl & MXC_F_USB_DEV_INTFL_EP_IN )
     {
+        usb_ack(USB_ENDPOINT_CONTROL);
     }
     if( intfl & MXC_F_USB_DEV_INTFL_EP_OUT )
     {
