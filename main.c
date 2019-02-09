@@ -8,7 +8,6 @@
 
 void main(void)
 {
-    DBG(("test%d",3));
     usb_init();
     while( 1 );
 }
