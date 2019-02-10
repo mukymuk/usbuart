@@ -145,6 +145,10 @@
     </CustomFolders>
     <Files AutoFolders="DirectoryView">
         <Folder Name="../">
+            <F N="../cbuf.c"/>
+            <F N="../cbuf.h"/>
+            <F N="../cli.c"/>
+            <F N="../cli.h"/>
             <F N="../global.h"/>
             <F N="../main.c"/>
             <F N="../usb.c"/>

@@ -1,6 +1,8 @@
 #ifndef __USB_DESCRIPTOR_H__
 #define __USB_DESCRIPTOR_H__
 
-void usb_init( void );
+#include "cbuf.h"
+
+void usb_init( cbuf_t * p_read, cbuf_t * p_write );
 
 #endif

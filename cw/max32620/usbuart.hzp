@@ -22,8 +22,8 @@
       arm_target_interface_type="SWD"
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
-      c_preprocessor_definitions=""
-      c_user_include_directories="$(DeviceIncludePath);../..;$(BOARD);$(BOARD)/csl/device/maxim/$(DeviceFamily)/include;$(BOARD)\\csl\\cmsis\\Device\\Maxim\\MAX32620\\Include;.."
+      c_preprocessor_definitions="TARGET=32620;TARGET_REV=0x4332"
+      c_user_include_directories="$(DeviceIncludePath);../..;$(BOARD);$(BOARD)/csl/device/maxim/MAX32620/include;$(BOARD)\\csl\\cmsis\\Device\\Maxim\\MAX32620\\Include;$(BOARD)\\csl\\periphdriver\\Include;.."
       debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
       gcc_entry_point="Reset_Handler"
       linker_memory_map_file="$(DeviceMemoryMapFile)"
@@ -52,14 +52,22 @@
         <configuration Name="Common" file_type="Assembly" />
       </file>
     </folder>
-    <file file_name="../../global.h" />
-    <file file_name="../../main.c" />
-    <file file_name="../../board/max32620fthr/board.c" />
     <folder Name="csl">
       <file file_name="../../board/max32620fthr/csl/cmsis/Device/Maxim/MAX32620/Source/system_max32620.c" />
+      <file file_name="../../board/max32620fthr/csl/periphdriver/Source/lp.c" />
     </folder>
-    <file file_name="../../usb.c" />
-    <file file_name="../../usb.h" />
+    <folder
+      Name="src"
+      exclude=""
+      filter="*.c;*.h"
+      path="../.."
+      recurse="No" />
+    <folder
+      Name="board"
+      exclude=""
+      filter="*.c;*.h"
+      path="../../board/max32620fthr"
+      recurse="No" />
   </project>
   <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
   <configuration

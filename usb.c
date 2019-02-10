@@ -1,84 +1,80 @@
 #include "global.h"
 #include "usb.h"
-#include "tmr_regs.h"
 
-#include "usb_regs.h"
-#include "max32620.h"
-
+#include "mxc_device.h"
 #include "pwrman_regs.h"
 #include "clkman_regs.h"
+#include "usb_regs.h"
 
-//#undef DBG
-//#define DBG(x)
+#undef DBG
+#define DBG(x)
 
 #define ACM_SET_LINE_CODING         0x20
 #define ACM_GET_LINE_CODING         0x21
 
+#define BMATTRIBUTES_TRANSFER_TYPE_BULK         2
+#define BMATTRIBUTES_TRANSFER_TYPE_INTERRUPT    3
 
+#define BMATTRIBUTES_SYNC_TYPE_NONE             (0<<2)
+#define BMATTRIBUTES_SYNC_TYPE_ASYNC            (1<<2)
+#define BMATTRIBUTES_SYNC_TYPE_ADAPTIVE         (2<<2)
+#define BMATTRIBUTES_SYNC_TYPE_SYNC             (3<<2)
 
-#define USB_CONFIG_SELF_POWERED 0
-#define ENDPOINT_COUNT 3
+#define BMATTRIBUTES_USAGE_TYPE_DATA            (0<<4)
+#define BMATTRIBUTES_USAGE_TYPE_FEEDBACK        (1<<4)
+#define BMATTRIBUTES_USAGE_TYPE_IMPLICIT_FEEDBACK (2<<4)
 
-#define USB_BMATTRIBUTES_TRANSFER_TYPE_BULK         2
-#define USB_BMATTRIBUTES_TRANSFER_TYPE_INTERRUPT    3
+#define DESCRIPTOR_TYPE_DEVICE          1
+#define DESCRIPTOR_TYPE_CONFIGURATION   2
+#define DESCRIPTOR_TYPE_STRING          3
 
-#define USB_BMATTRIBUTES_SYNC_TYPE_NONE             (0<<2)
-#define USB_BMATTRIBUTES_SYNC_TYPE_ASYNC            (1<<2)
-#define USB_BMATTRIBUTES_SYNC_TYPE_ADAPTIVE         (2<<2)
-#define USB_BMATTRIBUTES_SYNC_TYPE_SYNC             (3<<2)
+#define SETUP_REQUEST_TYPE_DIRECTION_HOST_TO_DEVICE 0
+#define SETUP_REQUEST_TYPE_DIRECTION_DEVICE_TO_HOST 1
 
-#define USB_BMATTRIBUTES_USAGE_TYPE_DATA            (0<<4)
-#define USB_BMATTRIBUTES_USAGE_TYPE_FEEDBACK        (1<<4)
-#define USB_BMATTRIBUTES_USAGE_TYPE_IMPLICIT_FEEDBACK (2<<4)
+#define SETUP_REQUEST_TYPE_STANDARD   0
+#define SETUP_REQUEST_TYPE_CLASS      1
+#define SETUP_REQUEST_TYPE_VENDOR     2
 
-#define USB_DESCRIPTOR_TYPE_DEVICE          1
-#define USB_DESCRIPTOR_TYPE_CONFIGURATION   2
-#define USB_DESCRIPTOR_TYPE_STRING          3
+#define SETUP_REQUEST_TYPE_RECIPIENT_DEVICE       0
+#define SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE    1
+#define SETUP_REQUEST_TYPE_RECIPIENT_ENDPOINT     2
 
-#define USB_SETUP_REQUEST_TYPE_DIRECTION_HOST_TO_DEVICE 0
-#define USB_SETUP_REQUEST_TYPE_DIRECTION_DEVICE_TO_HOST 1
-
-#define USB_SETUP_REQUEST_TYPE_STANDARD   0
-#define USB_SETUP_REQUEST_TYPE_CLASS      1
-#define USB_SETUP_REQUEST_TYPE_VENDOR     2
-
-#define USB_SETUP_REQUEST_TYPE_RECIPIENT_DEVICE       0
-#define USB_SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE    1
-#define USB_SETUP_REQUEST_TYPE_RECIPIENT_ENDPOINT     2
-
-#define USB_SETUP_REQUEST_GET_STATUS            0
-#define USB_SETUP_REQUEST_CLEAR_FEATURE         1
-#define USB_SETUP_REQUEST_SET_FEATURE           3
-#define USB_SETUP_REQUEST_SET_ADDRESS           5
-#define USB_SETUP_REQUEST_GET_DESCRIPTOR        6
-#define USB_SETUP_REQUEST_SET_DESCRIPTOR        7
-#define USB_SETUP_REQUEST_GET_CONFIGURATION     8
-#define USB_SETUP_REQUEST_SET_CONFIGURATION     9
-#define USB_SETUP_REQUEST_GET_INTERFACE         0x0A
-#define USB_SETUP_REQUEST_SET_INTERFACE         0x11
+#define SETUP_REQUEST_GET_STATUS            0
+#define SETUP_REQUEST_CLEAR_FEATURE         1
+#define SETUP_REQUEST_SET_FEATURE           3
+#define SETUP_REQUEST_SET_ADDRESS           5
+#define SETUP_REQUEST_GET_DESCRIPTOR        6
+#define SETUP_REQUEST_SET_DESCRIPTOR        7
+#define SETUP_REQUEST_GET_CONFIGURATION     8
+#define SETUP_REQUEST_SET_CONFIGURATION     9
+#define SETUP_REQUEST_GET_INTERFACE         10
+#define SETUP_REQUEST_SET_INTERFACE         0x11
 
 #define DESC_DEVICE               1
 #define DESC_CONFIG               2
-#define DESC_STRING               3
 #define DESC_INTERFACE            4
 #define DESC_ENDPOINT             5
-#define DESC_DEVICE_QUAL          6
-#define DESC_OTHER_SPEED          7
-#define DESC_IFACE_PWR            8
+
+#define ENDPOINT_CONTROL          0
+#define ENDPOINT_ACM_BULK_OUT     1
+#define ENDPOINT_ACM_BULK_IN      2
+#define ENDPOINT_BULK_COUNT       2
+#define ENDPOINT_CDC_INT_IN       3
+
+#pragma pack(1)
 
 typedef struct
 {
-    uint8_t     recipient : 5;  // USB_SETUP_REQUEST_TYPE_RECIPIENT_*
-    uint8_t     type      : 2;  // USB_SETUP_REQUEST_TYPE_*
-    uint8_t     direction : 1;  // USB_SETUP_REQUEST_TYPE_DIRECTION_*
+    uint8_t     recipient : 5;
+    uint8_t     type      : 2;
+    uint8_t     direction : 1;
 }
 usb_setup_request_type_t;
 
-
 typedef struct
 {
-    usb_setup_request_type_t        bmRequestType;  // USB_SETUP_REQUEST_TYPE_*
-    uint8_t                         bRequest;       // USB_SETUP_REQUEST_*
+    usb_setup_request_type_t        bmRequestType;
+    uint8_t                         bRequest;
     uint16_t                        wValue;
     uint16_t                        wIndex;
     uint16_t                        wLength;
@@ -91,18 +87,6 @@ typedef union
     uint32_t    reg[2];
 }
 usb_setup_reg_t;
-
-typedef struct
-{
-    uint8_t *           p_data;
-    uint16_t            size;
-    uint8_t             buffer[MXC_USB_MAX_PACKET];
-}
-endpoint_t;
-
-static endpoint_t s_endpoint[ENDPOINT_COUNT];
-
-#pragma pack(1)
 
 typedef struct
 {
@@ -124,19 +108,19 @@ typedef struct
 {
     usb_buffer_t      buffer[2];
 }
-usb_endpoint_buffer;
+usb_endpoint_buffer_t;
 
 typedef struct
 {
-    usb_endpoint_buffer      out;
-    usb_endpoint_buffer      in;
+    usb_endpoint_buffer_t      out;
+    usb_endpoint_buffer_t      in;
 }
-usb_endpoint0_buffer;
+usb_endpoint0_buffer_t;
 
 typedef struct
 {
-    usb_endpoint0_buffer    endpoint0;
-    usb_endpoint_buffer     endpoint[ENDPOINT_COUNT-1];
+    usb_endpoint0_buffer_t    endpoint0;
+    usb_endpoint_buffer_t     endpoint[ENDPOINT_BULK_COUNT];
 }
 usb_sie_t;
 
@@ -255,21 +239,6 @@ usb_configuration_descriptor_t;
 
 typedef struct
 {
-    uint16_t    self_powered : 1;
-    uint16_t    remote_wakeup : 1;
-    uint16_t    reserved : 14;
-}
-get_device_status_t;
-
-#define USB_ENDPOINT_CONTROL          0
-#define USB_ENDPOINT_ACM_BULK_IN      2
-#define USB_ENDPOINT_ACM_BULK_OUT     1
-#define USB_ENDPOINT_CDC_INT_IN       3
-
-#pragma pack(4)
-
-typedef struct
-{
     usb_device_descriptor_t         device;
     usb_configuration_descriptor_t  configuration;
 }
@@ -277,69 +246,36 @@ descriptors_t;
 
 #pragma pack()
 
-#define CS_INTERFACE    0x24
-#define CS_ENDPOINT     0x25
-
-#define CDC_HEADER(length,subtype) { .bFunctionalLength = length, .bDescriptorType = CS_INTERFACE, .bDescriptorSubtype = subtype }
-#define DESC_HEADER(length,type)    { .bLength = length, .bDescriptorType = type }
-
-
+typedef struct
+{
+    uint8_t                 buffer[MXC_USB_MAX_PACKET];
+    usb_buffer_t * const    sie;
+    uint8_t *               p_data;
+    uint16_t                size;
+}
+endpoint_t;
 
 static const uint8_t s_lang_id_desc[4] =
 {
-    0x04,         /* bLength */
-    0x03,         /* bDescriptorType */
-    0x09, 0x04    /* bString = wLANGID (see usb_20.pdf 9.6.7 String) */
+    4, 3, 9, 4
 };
 
-static const uint8_t s_mfg_id_desc[34] =
+static const uint8_t s_mfg_id_desc[8] =
 {
-    34, 0x03,
-    'M', 0,
-    'a', 0,
-    'x', 0,
-    'i', 0,
-    'm', 0,
-    ' ', 0,
-    'I', 0,
-    'n', 0,
-    't', 0,
+    8, 3,
+    'b', 0,
+    'o', 0,
     'e', 0,
-    'g', 0,
-    'r', 0,
-    'a', 0,
-    't', 0,
-    'e', 0,
-    'd', 0,
 };
 
-static const uint8_t s_prod_id_desc[34] =
+static const uint8_t s_prod_id_desc[4] =
 {
-    34, 0x03,
-    'M', 0,
-    'A', 0,
-    'X', 0,
-    '3', 0,
-    '2', 0,
-    '6', 0,
-    '2', 0,
-    '0', 0,
-    ' ', 0,
-    'C', 0,
-    'D', 0,
-    'C', 0,
-    '-', 0,
-    'A', 0,
-    'C', 0,
-    'M', 0,
+    2, 3,
+    '1', 0,
 };
 
-static const uint8_t * s_strings[3] =
-{
-    s_lang_id_desc,
-    s_mfg_id_desc,
-    s_prod_id_desc
-};
+#define CDC_HEADER(length,subtype) { .bFunctionalLength = length, .bDescriptorType = 0x24, .bDescriptorSubtype = subtype }
+#define DESC_HEADER(length,type)    { .bLength = length, .bDescriptorType = type }
 
 static const descriptors_t s_descriptors =
 {
@@ -353,6 +289,7 @@ static const descriptors_t s_descriptors =
         .bMaxPacketSize = MXC_USB_MAX_PACKET,
         .idVendor = 0x0B6A,
         .idProduct = 0x003C,
+        .bcdDevice = 0x100,
         .iManufacturer = 1,
         .iProduct = 2,
         .iSerialNumber = 0,
@@ -406,8 +343,8 @@ static const descriptors_t s_descriptors =
         .ep_int_in =
         {
             .header = DESC_HEADER(sizeof(s_descriptors.configuration.ep_int_in),DESC_ENDPOINT),
-            .bEndpointAddress = 0x80 | USB_ENDPOINT_CDC_INT_IN,
-            .bmAttributes = USB_BMATTRIBUTES_TRANSFER_TYPE_INTERRUPT|USB_BMATTRIBUTES_SYNC_TYPE_NONE|USB_BMATTRIBUTES_USAGE_TYPE_DATA,
+            .bEndpointAddress = 0x80 | ENDPOINT_CDC_INT_IN,
+            .bmAttributes = BMATTRIBUTES_TRANSFER_TYPE_INTERRUPT|BMATTRIBUTES_SYNC_TYPE_NONE|BMATTRIBUTES_USAGE_TYPE_DATA,
             .wMaxPacketSize = MXC_USB_MAX_PACKET,
             .bInterval = 0xFF
         },
@@ -425,64 +362,40 @@ static const descriptors_t s_descriptors =
         .ep_bulk_out =
         {
             .header = DESC_HEADER(sizeof(s_descriptors.configuration.ep_bulk_out),DESC_ENDPOINT),
-            .bEndpointAddress = USB_ENDPOINT_ACM_BULK_OUT,
-            .bmAttributes = USB_BMATTRIBUTES_TRANSFER_TYPE_BULK|USB_BMATTRIBUTES_SYNC_TYPE_NONE|USB_BMATTRIBUTES_USAGE_TYPE_DATA,
+            .bEndpointAddress = ENDPOINT_ACM_BULK_OUT,
+            .bmAttributes = BMATTRIBUTES_TRANSFER_TYPE_BULK|BMATTRIBUTES_SYNC_TYPE_NONE|BMATTRIBUTES_USAGE_TYPE_DATA,
             .wMaxPacketSize = MXC_USB_MAX_PACKET,
             .bInterval = 0
         },
         .ep_bulk_in =
         {
             .header = DESC_HEADER(sizeof(s_descriptors.configuration.ep_bulk_in),DESC_ENDPOINT),
-            .bEndpointAddress = 0x80 | USB_ENDPOINT_ACM_BULK_IN,
-            .bmAttributes = USB_BMATTRIBUTES_TRANSFER_TYPE_BULK|USB_BMATTRIBUTES_SYNC_TYPE_NONE|USB_BMATTRIBUTES_USAGE_TYPE_DATA,
+            .bEndpointAddress = 0x80 | ENDPOINT_ACM_BULK_IN,
+            .bmAttributes = BMATTRIBUTES_TRANSFER_TYPE_BULK|BMATTRIBUTES_SYNC_TYPE_NONE|BMATTRIBUTES_USAGE_TYPE_DATA,
             .wMaxPacketSize = MXC_USB_MAX_PACKET,
             .bInterval = 0
         },
     }
 };
 
-static volatile __attribute__ ((aligned (512))) usb_sie_t s_usb_sie;
+static __attribute__ ((aligned (512))) usb_sie_t    s_usb_sie;
+
+static endpoint_t s_ep_out;
+static endpoint_t s_ep_in;
+static endpoint_t s_ep_control;
+
+static cbuf_t *s_cbuf_read;
+static cbuf_t *s_cbuf_write;
+static uint32_t s_read_overflow;
+
+usb_buffer_t * const sie_bulk_out = &s_usb_sie.endpoint[ENDPOINT_ACM_BULK_OUT-1].buffer[0];
+usb_buffer_t * const sie_bulk_in = &s_usb_sie.endpoint[ENDPOINT_ACM_BULK_IN-1].buffer[0];
+usb_buffer_t * const sie_ctrl_out = &s_usb_sie.endpoint0.out.buffer[0];
+usb_buffer_t * const sie_ctrl_in = &s_usb_sie.endpoint0.in.buffer[0];
 
 static void inline usb_stall( uint8_t ep )
 {
     MXC_USB->ep[ep] |= MXC_F_USB_EP_STALL | MXC_F_USB_EP_ST_STALL;
-}
-
-
-void usb_init( void )
-{
-    uint8_t i;
-
-    MXC_TMR0->term_cnt32 = 0xFFFFFFF;
-
-    MXC_TMR0->ctrl = MXC_V_TMR_CTRL_MODE_CONTINUOUS << MXC_F_TMR_CTRL_MODE_POS | MXC_F_TMR_CTRL_ENABLE0;
-
-    MXC_CLKMAN->clk_ctrl = MXC_F_CLKMAN_CLK_CTRL_USB_CLOCK_ENABLE;
-
-
-    MXC_PWRMAN->pwr_rst_ctrl |= MXC_F_PWRMAN_PWR_RST_CTRL_USB_POWERED;
-
-    for(i=0;i<ENDPOINT_COUNT;i++)
-    {
-        s_usb_sie.endpoint[i].buffer[0].address = (int32_t)s_endpoint[i+1].buffer;
-        s_usb_sie.endpoint[i].buffer[0].size = MXC_USB_MAX_PACKET;
-    }
-    s_usb_sie.endpoint0.in.buffer[0].address = (int32_t)s_endpoint[0].buffer;
-    s_usb_sie.endpoint0.out.buffer[0].address = (int32_t)s_endpoint[0].buffer;
-    MXC_USB->ep[USB_ENDPOINT_CONTROL] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_CONTROL << MXC_F_USB_EP_DIR_POS;
-    MXC_USB->ep[USB_ENDPOINT_ACM_BULK_IN] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_IN << MXC_F_USB_EP_DIR_POS;
-    MXC_USB->ep[USB_ENDPOINT_ACM_BULK_OUT] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_OUT << MXC_F_USB_EP_DIR_POS;
-    //MXC_USB->ep[USB_ENDPOINT_CDC_INT_IN] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_IN << MXC_F_USB_EP_DIR_POS;
-
-    MXC_USB->cn = 1;
-    MXC_USB->ep_base = (uint32_t)&s_usb_sie;
-    MXC_USB->dev_inten = MXC_F_USB_DEV_INTEN_SETUP | MXC_F_USB_DEV_INTEN_EP_IN | MXC_F_USB_DEV_INTEN_EP_OUT;
-    MXC_USB->dev_cn = (MXC_F_USB_DEV_CN_CONNECT | MXC_F_USB_DEV_CN_FIFO_MODE);
-
-    MXC_USB->out_owner = (1<<USB_ENDPOINT_ACM_BULK_OUT);
-    usb_stall(USB_ENDPOINT_ACM_BULK_IN);
-    usb_stall(USB_ENDPOINT_CDC_INT_IN);
-    NVIC_EnableIRQ(USB_IRQn);
 }
 
 static void inline usb_ack( uint8_t ep )
@@ -490,113 +403,175 @@ static void inline usb_ack( uint8_t ep )
     MXC_USB->ep[ep] |= MXC_F_USB_EP_ST_ACK;
 }
 
-static void read_continue( uint8_t ep )
+static void lock( cbuf_t *p_cbuf )
 {
-    endpoint_t *p_ep = &s_endpoint[ep];
-    uint32_t size = p_ep->size;
-    if( ep )
-    {
-        size = s_usb_sie.endpoint[ep-1].buffer[0].size;
-        s_usb_sie.endpoint[ep-1].buffer[0].size = MXC_USB_MAX_PACKET;
-    }
+    if( p_cbuf == s_cbuf_write )
+        MXC_USB->ep[ENDPOINT_ACM_BULK_IN] &= ~MXC_F_USB_EP_INT_EN;
     else
-    {
-        size = s_usb_sie.endpoint0.out.buffer[0].size;
-        s_usb_sie.endpoint0.out.buffer[0].size = MXC_USB_MAX_PACKET;
-    }
-
-    if( size >  p_ep->size )
-        size =  p_ep->size;
-
-    memcpy( p_ep->p_data, p_ep->buffer, size );
-
-    p_ep->size -= size;
-    p_ep->p_data += size;
-
-    if( !p_ep->size )
-    {
-        usb_ack(ep);
-    }
-
-    MXC_USB->out_owner = (1<<ep);
+        MXC_USB->ep[ENDPOINT_ACM_BULK_OUT] &= ~MXC_F_USB_EP_INT_EN;
 }
 
-static void usb_read( uint8_t ep, void *pv_data, uint8_t size )
-{
-    endpoint_t *p_ep = &s_endpoint[ep];
-    p_ep->size = size;
-    p_ep->p_data = pv_data;
-    if( ep )
-        s_usb_sie.endpoint[ep-1].buffer[0].size = MXC_USB_MAX_PACKET;
-    else
-        s_usb_sie.endpoint0.out.buffer[0].size = MXC_USB_MAX_PACKET;
-    MXC_USB->out_owner = (1<<ep);
+static bool s_ining;
 
-}
-
-static void write_continue( uint8_t ep )
+static void write_bulk_in( void )
 {
-    endpoint_t *p_ep = &s_endpoint[ep];
-    uint32_t size = p_ep->size;
+    uint32_t size = cbuf_read( s_cbuf_write, s_ep_in.buffer, MXC_USB_MAX_PACKET );
+    sie_bulk_in->size = size;
     if( size )
     {
-        if( size > MXC_USB_MAX_PACKET )
-            size = MXC_USB_MAX_PACKET;
-
-        memcpy( p_ep->buffer, p_ep->p_data, size );
-        if( ep )
-            s_usb_sie.endpoint[ep-1].buffer[0].size = size;
-        else
-            s_usb_sie.endpoint0.in.buffer[0].size = size;
-
-        MXC_USB->in_owner = (1<<ep);
-
-        p_ep->size -= size;
-        p_ep->p_data += size;
+        s_ining = true;
+        sie_bulk_in->size = size;
+        MXC_USB->in_owner = (1 << ENDPOINT_ACM_BULK_IN);    // return buffer to usb sie control
     }
     else
-    {
-        usb_ack(ep);
-    }
+        s_ining = false;
+    usb_ack(ENDPOINT_ACM_BULK_IN);
 }
 
-static void usb_write( uint8_t ep, const void *pv_data, uint8_t size )
+static void unlock( cbuf_t *p_cbuf )
 {
-    endpoint_t *p_ep = &s_endpoint[ep];
+    if( p_cbuf == s_cbuf_write )
+    {
+        if( !s_ining )
+            write_bulk_in();
+        MXC_USB->ep[ENDPOINT_ACM_BULK_IN] |= MXC_F_USB_EP_INT_EN;
+    }
+    else
+        MXC_USB->ep[ENDPOINT_ACM_BULK_OUT] |= MXC_F_USB_EP_INT_EN;
+}
 
-    p_ep->size = size;
-    p_ep->p_data = (void*)pv_data;
-    write_continue(ep);
+static void inline ready_bulk_out(void)
+{
+    sie_bulk_out->size = MXC_USB_MAX_PACKET;  // reset for subsequent reads
+    MXC_USB->out_owner = (1<<ENDPOINT_ACM_BULK_OUT);    // return buffer to usb sie control
+}
+
+void usb_init( cbuf_t * p_cbuf_read, cbuf_t * p_cbuf_write )
+{
+    uint8_t i;
+
+    cbuf_write_lock( p_cbuf_write, lock, unlock );
+    cbuf_read_lock( p_cbuf_read, lock, unlock );
+
+    s_cbuf_read = p_cbuf_read;
+    s_cbuf_write = p_cbuf_write;
+
+    MXC_CLKMAN->clk_ctrl = MXC_F_CLKMAN_CLK_CTRL_USB_CLOCK_ENABLE;
+    MXC_PWRMAN->pwr_rst_ctrl |= MXC_F_PWRMAN_PWR_RST_CTRL_USB_POWERED;
+
+    sie_bulk_out->address = (int32_t)s_ep_out.buffer;
+    sie_bulk_in->address = (int32_t)s_ep_in.buffer;
+    sie_ctrl_in->address = (int32_t)s_ep_control.buffer;
+    sie_ctrl_out->address = (int32_t)s_ep_control.buffer;
+
+    MXC_USB->ep[ENDPOINT_CONTROL] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_CONTROL << MXC_F_USB_EP_DIR_POS;
+    MXC_USB->ep[ENDPOINT_ACM_BULK_IN] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_IN << MXC_F_USB_EP_DIR_POS;
+    MXC_USB->ep[ENDPOINT_ACM_BULK_OUT] = MXC_F_USB_EP_INT_EN | MXC_V_USB_EP_DIR_OUT << MXC_F_USB_EP_DIR_POS;
+
+    MXC_USB->cn = 1;
+    MXC_USB->ep_base = (uint32_t)&s_usb_sie;
+    MXC_USB->dev_inten = MXC_F_USB_DEV_INTEN_SETUP | MXC_F_USB_DEV_INTEN_EP_IN | MXC_F_USB_DEV_INTEN_EP_OUT;
+    MXC_USB->dev_cn = (MXC_F_USB_DEV_CN_CONNECT | MXC_F_USB_DEV_CN_FIFO_MODE);
+
+    ready_bulk_out();
+    NVIC_EnableIRQ(USB_IRQn);
+}
+
+static void write_control_in( void )
+{
+    uint32_t size = MIN(s_ep_control.size,MXC_USB_MAX_PACKET);
+    if( size )
+    {
+        sie_ctrl_in->size = size;
+        memcpy( s_ep_control.buffer, s_ep_control.p_data, size );
+        s_ep_control.p_data += size;
+        s_ep_control.size -= size;
+        MXC_USB->in_owner = (1<<ENDPOINT_CONTROL);
+    }
+    usb_ack(ENDPOINT_CONTROL);
+}
+
+static void read_control_out( void )
+{
+    // receiving control data from the host
+
+    uint32_t dest_size = s_ep_control.size;
+    uint32_t available = sie_ctrl_out->size;
+
+    sie_ctrl_out->size = MXC_USB_MAX_PACKET;  // reset for subsequent reads
+
+    uint32_t size = MIN(available,dest_size);
+    memcpy( s_ep_control.p_data, s_ep_control.buffer, size );
+
+    s_ep_control.p_data += size;
+    s_ep_control.size -= size;
+
+    if( s_ep_control.size )
+        MXC_USB->out_owner = (1<<ENDPOINT_CONTROL);    // return buffer to usb sie control
+    usb_ack( ENDPOINT_CONTROL );
+}
+
+static void read_bulk_out( void )
+{
+    // receiving serial data from the host
+    uint32_t available;
+
+    available = sie_bulk_out->size;    // number of bytes available to read
+    s_read_overflow += (available - cbuf_write( s_cbuf_read, s_ep_out.buffer, available));
+    ready_bulk_out();
+    usb_ack( ENDPOINT_ACM_BULK_OUT );
+}
+
+static void write_control_in_begin( const void *pv_data, uint8_t size )
+{
+    // send control data to the host
+    s_ep_control.size = size;
+    s_ep_control.p_data = (void*)pv_data;
+    write_control_in();
+}
+
+static void read_control_out_begin( const void *pv_data, uint8_t size )
+{
+    // prepare to receive control data from the host
+    s_ep_control.size = size;
+    s_ep_control.p_data = (void*)pv_data;
+    MXC_USB->out_owner = (1<<ENDPOINT_CONTROL);
 }
 
 static void setup_standard_device_request( const usb_setup_t * p )
 {
     switch( p->bRequest )
     {
-        case USB_SETUP_REQUEST_GET_DESCRIPTOR:
+        case SETUP_REQUEST_GET_DESCRIPTOR:
         {
             uint8_t type = p->wValue >> 8;
             switch( type )
             {
-                case USB_DESCRIPTOR_TYPE_DEVICE:
+                case DESCRIPTOR_TYPE_DEVICE:
                 {
-                    DBG(("USB_DESCRIPTOR_TYPE_DEVICE\n"));
-                    usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.device, MIN(sizeof(s_descriptors.device),p->wLength) );
+                    DBG(("DESCRIPTOR_TYPE_DEVICE\n"));
+                    write_control_in_begin( &s_descriptors.device, MIN(sizeof(s_descriptors.device),p->wLength) );
                     return;
                 }
-                case USB_DESCRIPTOR_TYPE_CONFIGURATION:
+                case DESCRIPTOR_TYPE_CONFIGURATION:
                 {
-                    DBG(("USB_DESCRIPTOR_TYPE_CONFIGURATION\n"));
-                    usb_write( USB_ENDPOINT_CONTROL, &s_descriptors.configuration, MIN(sizeof(s_descriptors.configuration),p->wLength) );
+                    DBG(("DESCRIPTOR_TYPE_CONFIGURATION\n"));
+                    write_control_in_begin( &s_descriptors.configuration, MIN(sizeof(s_descriptors.configuration),p->wLength) );
                     return;
                 }
-                case USB_DESCRIPTOR_TYPE_STRING:
+                case DESCRIPTOR_TYPE_STRING:
                 {
-                    DBG(("USB_DESCRIPTOR_TYPE_STRING\n"));
+                    DBG(("DESCRIPTOR_TYPE_STRING\n"));
+                    static const uint8_t * s_strings[3] =
+                    {
+                        s_lang_id_desc,
+                        s_mfg_id_desc,
+                        s_prod_id_desc
+                    };
                     uint8_t ndx = p->wValue & 0xFF;
                     if( ndx < ARRAY_COUNT(s_strings) )
                     {
-                        usb_write(USB_ENDPOINT_CONTROL, s_strings[ndx], MIN(s_strings[ndx][0],p->wLength) );
+                        write_control_in_begin( s_strings[ndx], MIN(s_strings[ndx][0],p->wLength) );
                         return;
                     }
                     break;
@@ -604,34 +579,34 @@ static void setup_standard_device_request( const usb_setup_t * p )
             }
             break;
         }
-        case USB_SETUP_REQUEST_SET_CONFIGURATION:
+        case SETUP_REQUEST_SET_CONFIGURATION:
         {
-            usb_ack(USB_ENDPOINT_CONTROL);
+            usb_ack(ENDPOINT_CONTROL);
             return;
         }
     }
-    usb_stall(USB_ENDPOINT_CONTROL);
+    usb_stall(ENDPOINT_CONTROL);
 }
 
 static void setup_standard_interface_request( const usb_setup_t * p )
 {
     switch( p->bRequest )
     {
-        case USB_SETUP_REQUEST_GET_INTERFACE:
+        case SETUP_REQUEST_GET_INTERFACE:
         {
             uint8_t zero = 0;
-            DBG(("USB_SETUP_REQUEST_GET_INTERFACE\n"));
-            usb_write( USB_ENDPOINT_CONTROL, &zero, sizeof(zero) );
+            DBG(("SETUP_REQUEST_GET_INTERFACE\n"));
+            write_control_in_begin( &zero, sizeof(zero) );
             return;
         }
-        case USB_SETUP_REQUEST_SET_INTERFACE:
+        case SETUP_REQUEST_SET_INTERFACE:
         {
-            DBG(("USB_SETUP_REQUEST_SET_INTERFACE\n"));
-            usb_ack(USB_ENDPOINT_CONTROL);
+            DBG(("SETUP_REQUEST_SET_INTERFACE\n"));
+            usb_ack(ENDPOINT_CONTROL);
             return;
         }
     }
-    usb_stall(USB_ENDPOINT_CONTROL);
+    usb_stall(ENDPOINT_CONTROL);
 }
 
 static void setup_class_interface_request( const usb_setup_t * p )
@@ -649,17 +624,17 @@ static void setup_class_interface_request( const usb_setup_t * p )
         case ACM_SET_LINE_CODING:
         {
             DBG(("ACM_SET_LINE_CODING\n"));
-            usb_read( USB_ENDPOINT_CONTROL, &line_coding, sizeof(line_coding) );
+            read_control_out_begin( &line_coding, sizeof(line_coding) );
             return;
         }
         case ACM_GET_LINE_CODING:
         {
             DBG(("ACM_GET_LINE_CODING\n"));
-            usb_write( USB_ENDPOINT_CONTROL, &line_coding, sizeof(line_coding) );
+            write_control_in_begin( &line_coding, sizeof(line_coding) );
             return;
         }
     }
-    usb_stall(USB_ENDPOINT_CONTROL);
+    usb_stall(ENDPOINT_CONTROL);
 }
 
 static void setup( void )
@@ -675,33 +650,33 @@ static void setup( void )
     }
     switch( p->bmRequestType.type )
     {
-        case USB_SETUP_REQUEST_TYPE_STANDARD:
+        case SETUP_REQUEST_TYPE_STANDARD:
         {
             switch( p->bmRequestType.recipient )
             {
-                case USB_SETUP_REQUEST_TYPE_RECIPIENT_DEVICE:
+                case SETUP_REQUEST_TYPE_RECIPIENT_DEVICE:
                 {
-                    DBG(("USB_SETUP_REQUEST_TYPE_RECIPIENT_DEVICE\n"));
+                    DBG(("SETUP_REQUEST_TYPE_RECIPIENT_DEVICE\n"));
                     setup_standard_device_request(p);
                     return;
                 }
-                case USB_SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE:
+                case SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE:
                 {
-                    DBG(("USB_SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE\n"));
+                    DBG(("SETUP_REQUEST_TYPE_RECIPIENT_INTERFACE\n"));
                     setup_standard_interface_request(p);
                     return;
                 }
             }
             break;
         }
-        case USB_SETUP_REQUEST_TYPE_CLASS:
+        case SETUP_REQUEST_TYPE_CLASS:
         {
-            DBG( ("USB_SETUP_REQUEST_TYPE_CLASS\n"));
+            DBG(("SETUP_REQUEST_TYPE_CLASS\n"));
             setup_class_interface_request(p);
             return;
         }
     }
-    usb_stall(USB_ENDPOINT_CONTROL);
+    usb_stall(ENDPOINT_CONTROL);
 }
 
 
@@ -711,28 +686,19 @@ void USB_IRQHandler( void )
     if( intfl & MXC_F_USB_DEV_INTFL_EP_IN )
     {
         uint32_t in_int = MXC_USB->in_int;
-        for(int8_t ep=0;ep<ENDPOINT_COUNT;ep++)
-        {
-           if( in_int & 1<<ep )
-           {
-               DBG(("MXC_F_USB_DEV_INTFL_EP_IN = %d\n", ep));
-               write_continue( ep );
-           }
-        }
+        if( in_int & (1<<ENDPOINT_ACM_BULK_IN) )
+            write_bulk_in();
+        if( in_int & (1<<ENDPOINT_CONTROL) )
+            write_control_in();
         MXC_USB->in_int = in_int;
     }
     if( intfl & MXC_F_USB_DEV_INTFL_EP_OUT )
     {
-        
         uint32_t out_int = MXC_USB->out_int;
-        for(int8_t ep=0;ep<ENDPOINT_COUNT;ep++)
-        {
-            if( out_int & 1<<ep )
-            {
-                DBG(("MXC_F_USB_DEV_INTFL_EP_OUT = %d\n", ep));
-                read_continue( ep );
-            }
-        }
+        if( out_int & (1<<ENDPOINT_ACM_BULK_OUT) )
+            read_bulk_out();
+        if( out_int & (1<<ENDPOINT_CONTROL) )
+            read_control_out();
         MXC_USB->out_int = out_int;
     }
     if( intfl & MXC_F_USB_DEV_INTFL_SETUP )
